@@ -1,3 +1,5 @@
+![demo](res/demo.gif)
+
 # VpnToggle for Hammerspoon
 
 **VpnToggle** shows your VPN status in the menubar and lets you toggle it with a hotkey.
@@ -5,7 +7,6 @@
 * Works with **any VPN** via macOS system APIs — no need to open the VPN app
 * Shows status: **Connected / Disconnected**
 
-![demo](res/demo.gif)
 
 ---
 
