@@ -10,13 +10,7 @@
 ## Installation
 
 1. Put `VpnToggle.lua` in `~/.hammerspoon/`
-2. Copy the `icons` folder from the repository root into `~/.hammerspoon/`:
-
-   ```
-   connected.svg
-   connecting.svg
-   disconnected.svg
-   ```
+2. Copy the `icons` folder from the repository root into `~/.hammerspoon/`
 
 ---
 
