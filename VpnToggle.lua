@@ -1,6 +1,5 @@
 -- Configuration
-local hotkeyKey = "f13"
-local updateInterval = 2
+local hotkey = "f13"
 
 -- Script
 local vpn = hs.execute([[scutil --nc list | awk -F'"' '/\*/{print $2}']]):gsub("\n", "")
@@ -63,6 +62,8 @@ local function toggleVPN()
     end
 end
 
-hs.hotkey.bind({}, hotkeyKey, toggleVPN)
+hs.hotkey.bind({}, hotkey, toggleVPN)
 
-hs.timer.doEvery(updateInterval, updateIcon)
+-- Handle outside events
+local updateInverval = 5
+hs.timer.doEvery(updateInverval, updateIcon)

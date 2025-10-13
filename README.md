@@ -7,16 +7,11 @@
 
 ---
 
-## Installation
+## Usage
 
 1. Put `VpnToggle.lua` in `~/.hammerspoon/`
 2. Copy the `icons` folder from the repository root into `~/.hammerspoon/`
-
----
-
-## Usage
-
-Add to `~/.hammerspoon/init.lua`:
+3. Add to `~/.hammerspoon/init.lua`:
 
 ```lua
 require("VpnToggle")
@@ -29,6 +24,5 @@ require("VpnToggle")
 Inside `VpnToggle.lua` you can adjust:
 
 ```lua
-local hotkeyKey         -- Hotkey to toggle VPN
-local updateInterval    -- Interval to update the icon (in seconds)
+local hotkey         -- Hotkey to toggle VPN
 ```
