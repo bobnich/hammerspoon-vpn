@@ -65,5 +65,5 @@ end
 hs.hotkey.bind({}, hotkey, toggleVPN)
 
 -- Handle outside events
-local updateInverval = 5
+local updateInverval = 3
 hs.timer.doEvery(updateInverval, updateIcon)
