@@ -1,5 +1,6 @@
 -- Configuration
-local hotkey = "f13"
+local hotkeyMods = { "cmd", "shift" }
+local hotkeyKey = "v"
 
 -- Script
 local vpn = hs.execute([[scutil --nc list | awk -F'"' '/\*/{print $2}']]):gsub("\n", "")
@@ -62,7 +63,7 @@ local function toggleVPN()
     end
 end
 
-hs.hotkey.bind({}, hotkey, toggleVPN)
+hs.hotkey.bind(hotkeyMods, hotkeyKey, toggleVPN)
 
 -- Handle outside events
 local updateInverval = 3

@@ -24,8 +24,10 @@ require("VpnToggle")
 
 ## Configuration
 
-Inside `VpnToggle.lua` you can adjust:
+Inside `VpnToggle.lua` you can adjust hotkey:
 
 ```lua
-local hotkey         -- Hotkey to toggle VPN
+-- Example: ⌘ + ⇧ + v
+local hotkeyMods = { "cmd", "shift" }
+local hotkeyKey = "v"
 ```
