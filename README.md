@@ -5,6 +5,8 @@
 * Works with **any VPN** via macOS system APIs — no need to open the VPN app
 * Shows status: **Connected / Disconnected**
 
+![demo](res/demo.gif)
+
 ---
 
 ## Usage
