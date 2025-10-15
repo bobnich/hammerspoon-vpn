@@ -1,23 +1,25 @@
--- Configuration
-local hotkeyMods = { "cmd", "shift" }
-local hotkeyKey = "v"
+local hotkeys = {
+    { {"cmd", "ctrl"}, "v" },
+    { { "cmd" }, "r" },
+}
 
--- Script
 local vpn = hs.execute([[scutil --nc list | awk -F'"' '/\*/{print $2}']]):gsub("\n", "")
 
 local vpnMenu = hs.menubar.new()
 
 local iconsPath = "~/.hammerspoon/icons/"
 local icons = {
-    connected    = iconsPath .. "connected.svg",
-    connecting   = iconsPath .. "connecting.svg",
-    disconnected = iconsPath .. "disconnected.svg",
+    connected     = iconsPath .. "connected.svg",
+    connecting    = iconsPath .. "progress.svg",
+    disconnecting = iconsPath .. "progress.svg",
+    disconnected  = iconsPath .. "disconnected.svg",
 }
 
 local statuses = {
-    connected    = "connected",
-    connecting   = "connecting",
-    disconnected = "disconnected",
+    connected     = "connected",
+    connecting    = "connecting",
+    disconnecting = "disconnecting",
+    disconnected  = "disconnected",
 }
 
 local function trim(s)
@@ -31,13 +33,20 @@ local function vpnStatus()
         return statuses.connected
     elseif output:match("^Connecting") then
         return statuses.connecting
+    elseif output:match("^Disconnecting") then
+        return statuses.disconnecting
     else
         return statuses.disconnected
     end
 end
 
 local function isBusy()
-    return vpnStatus() == statuses.connecting
+    local status = vpnStatus()
+    local busyStatuses = {
+        [statuses.connecting] = true,
+        [statuses.disconnecting] = true,
+    }
+    return busyStatuses[status] == true
 end
 
 local function updateIcon(status)
@@ -50,21 +59,52 @@ local function updateIcon(status)
     end
 end
 
+local function waitForStatusChange(oldStatus, timeout, interval)
+    local elapsed = 0
+
+    local function shouldStop(newStatus)
+        if newStatus ~= oldStatus
+           and newStatus ~= statuses.connecting
+           and newStatus ~= statuses.disconnecting then
+            return true
+        end
+
+        return elapsed >= timeout
+    end
+
+    hs.timer.doEvery(interval, function(t)
+        elapsed = elapsed + interval
+        local newStatus = vpnStatus()
+        updateIcon(newStatus)
+
+        if shouldStop(newStatus) then
+            t:stop()
+        end
+    end)
+end
+
+
 local function toggleVPN()
     if isBusy() then return end
 
-    local status = vpnStatus()
-    if status == statuses.connected then
-        updateIcon(statuses.disconnected)
+    local oldStatus = vpnStatus()
+
+    if oldStatus == statuses.connected then
+        updateIcon(statuses.disconnecting)
         hs.execute(string.format('scutil --nc stop "%s"', vpn))
     else
-        updateIcon(statuses.connected)
+        updateIcon(statuses.connecting)
         hs.execute(string.format('scutil --nc start "%s"', vpn))
     end
+
+    waitForStatusChange(oldStatus, 3, 0.5)
 end
 
-hs.hotkey.bind(hotkeyMods, hotkeyKey, toggleVPN)
+for _, hk in ipairs(hotkeys) do
+    local modifiers, key = hk[1], hk[2]
+    hs.hotkey.bind(modifiers, key, toggleVPN)
+end
 
 -- Handle outside events
-local updateInverval = 3
-hs.timer.doEvery(updateInverval, updateIcon)
+local updateInterval = 3
+hs.timer.doEvery(updateInterval, updateIcon)

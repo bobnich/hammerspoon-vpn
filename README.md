@@ -5,7 +5,7 @@
 **VpnToggle** shows your VPN status in the menubar and lets you toggle it with a hotkey.
 
 * Works with **any VPN** via macOS system APIs — no need to open the VPN app
-* Shows status: **Connected / Disconnected**
+* Shows status: **Connected / Progress / Disconnected**
 
 
 ---
@@ -24,10 +24,12 @@ require("VpnToggle")
 
 ## Configuration
 
-Inside `VpnToggle.lua` you can adjust hotkey:
+Inside `VpnToggle.lua` you can adjust hotkeys:
 
 ```lua
--- Example: ⌘ + ⇧ + v
-local hotkeyMods = { "cmd", "shift" }
-local hotkeyKey = "v"
+-- Example: (⌘ + ⇧ + v) & (⌘ + r)
+local hotkeys = {
+    { {"cmd", "ctrl"}, "v" },
+    { { "cmd" }, "r" },
+}
 ```
