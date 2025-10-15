@@ -1,35 +1,39 @@
-![demo](res/demo.gif)
+![demo](.github/header.gif)
 
 # VpnToggle for Hammerspoon
 
-**VpnToggle** shows your VPN status in the menubar and lets you toggle it with a hotkey.
+**VpnToggle** is a Hammerspoon Spoon that shows your VPN status in the menubar and lets you toggle it using hotkeys.
 
-* Works with **any VPN** via macOS system APIs — no need to open the VPN app
-* Shows status: **Connected / Progress / Disconnected**
-
+* Works with **any macOS VPN** via system APIs — no need to open the VPN app.
+* Displays status: **Connected / Connecting / Disconnecting / Disconnected**.
+* Hotkeys are configurable from your `init.lua`.
 
 ---
 
-## Usage
+## Installation
 
-1. Put `VpnToggle.lua` in `~/.hammerspoon/`
-2. Copy the `icons` folder from the repository root into `~/.hammerspoon/`
-3. Add to `~/.hammerspoon/init.lua`:
+1. Place the `VpnToggle.spoon` folder in `~/.hammerspoon/Spoons/`.
+2. Load the Spoon in your `~/.hammerspoon/init.lua`:
 
 ```lua
-require("VpnToggle")
+hs.loadSpoon("VpnToggle")
 ```
 
 ---
 
 ## Configuration
 
-Inside `VpnToggle.lua` you can adjust hotkeys:
+Set your preferred hotkeys in `init.lua`:
 
 ```lua
--- Example: (⌘ + ⇧ + v) & (⌘ + r)
-local hotkeys = {
-    { {"cmd", "ctrl"}, "v" },
-    { { "cmd" }, "r" },
-}
+-- Example: bind VPN toggle to ⌘ + Ctrl + V and F13
+spoon.VpnToggle:bindHotkeys({
+    { mods = {"cmd", "ctrl"}, key = "v" },
+    { mods = {}, key = "f13" },
+})
+
+spoon.VpnToggle:start()
 ```
+
+* `mods` — table of modifier keys (`"cmd"`, `"ctrl"`, `"alt"`, `"shift"`)
+* `key` — the key used to toggle the VPN

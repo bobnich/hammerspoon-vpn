@@ -1,13 +1,30 @@
-local hotkeys = {
-    { {"cmd", "ctrl"}, "v" },
-    { { "cmd" }, "r" },
-}
+--- === VpnToggle ===
+---
+--- Toggle macOS VPN connections via scutil, with menubar icon and hotkeys.
+---
+
+local obj = {}
+obj.__index = obj
+
+-- Metadata
+obj.name = "VpnToggle"
+obj.version = "1.0"
+obj.author = "Bob Nicholson"
+obj.homepage = "https://github.com/bobnich/toggle-vpn-spoon"
+obj.license = "MIT"
+
+-------------------------------------------------------
+-- Internal Variables
+-------------------------------------------------------
+
+obj.hotkeys = {}
 
 local vpn = hs.execute([[scutil --nc list | awk -F'"' '/\*/{print $2}']]):gsub("\n", "")
 
 local vpnMenu = hs.menubar.new()
 
-local iconsPath = "~/.hammerspoon/icons/"
+local iconsPath = hs.spoons.resourcePath("icons/")
+
 local icons = {
     connected     = iconsPath .. "connected.svg",
     connecting    = iconsPath .. "progress.svg",
@@ -21,6 +38,10 @@ local statuses = {
     disconnecting = "disconnecting",
     disconnected  = "disconnected",
 }
+
+-------------------------------------------------------
+-- Helper Functions
+-------------------------------------------------------
 
 local function trim(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
@@ -68,7 +89,6 @@ local function waitForStatusChange(oldStatus, timeout, interval)
            and newStatus ~= statuses.disconnecting then
             return true
         end
-
         return elapsed >= timeout
     end
 
@@ -77,7 +97,6 @@ local function waitForStatusChange(oldStatus, timeout, interval)
         elapsed = elapsed + interval
         local newStatus = vpnStatus()
         updateIcon(newStatus)
-
         if shouldStop(newStatus) then
             timer:stop()
         end
@@ -100,11 +119,34 @@ local function toggleVPN()
     waitForStatusChange(oldStatus, 3, 0.5)
 end
 
-for _, hk in ipairs(hotkeys) do
-    local modifiers, key = hk[1], hk[2]
-    hs.hotkey.bind(modifiers, key, toggleVPN)
+-------------------------------------------------------
+-- Spoon Methods
+-------------------------------------------------------
+
+--- VpnToggle:bindHotkeys(hotkeyTable)
+--- Method
+--- Binds hotkeys for VPN toggling.
+--- Example:
+--- spoon.VpnToggle:bindHotkeys({
+---     { mods = {"cmd", "ctrl"}, key = "v" },
+---     { mods = {}, key = "f1" },
+--- })
+function obj:bindHotkeys(hotkeyTable)
+    if type(hotkeyTable) ~= "table" then return end
+    obj.hotkeys = hotkeyTable
 end
 
--- Handle outside events
-local updateInterval = 3
-hs.timer.doEvery(updateInterval, updateIcon)
+function obj:start()
+    for _, hk in ipairs(obj.hotkeys) do
+        local mods, key = hk.mods or {}, hk.key
+        hs.hotkey.bind(mods, key, toggleVPN)
+    end
+
+    local updateInterval = 3
+    hs.timer.doEvery(updateInterval, updateIcon)
+
+    updateIcon()
+    return self
+end
+
+return obj
