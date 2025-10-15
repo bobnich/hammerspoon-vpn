@@ -72,17 +72,17 @@ local function waitForStatusChange(oldStatus, timeout, interval)
         return elapsed >= timeout
     end
 
-    hs.timer.doEvery(interval, function(t)
+    local timer
+    timer = hs.timer.doEvery(interval, function()
         elapsed = elapsed + interval
         local newStatus = vpnStatus()
         updateIcon(newStatus)
 
         if shouldStop(newStatus) then
-            t:stop()
+            timer:stop()
         end
     end)
 end
-
 
 local function toggleVPN()
     if isBusy() then return end
