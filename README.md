@@ -24,19 +24,36 @@ hs.loadSpoon("VpnToggle")
 
 ## Configuration
 
-Set your preferred hotkeys in `init.lua`:
+### Bind Hotkeys
+
+Specify the hotkeys to toggle your VPN:
 
 ```lua
--- Example: bind VPN toggle to ⌘ + Ctrl + V and F13
 spoon.VpnToggle:bindHotkeys({
-    { mods = {"cmd", "ctrl"}, key = "v" },
-    { mods = {}, key = "f13" },
+    { mods = {"cmd", "ctrl"}, key = "v" }, -- ⌘ + Ctrl + V
+    { mods = {}, key = "f13" },            -- F13
 })
--- Enable sleep/awake VPN handling
-spoon.VpnToggle:addSleepWatcher()
-
-spoon.VpnToggle:start()
 ```
 
 * `mods` — table of modifier keys (`"cmd"`, `"ctrl"`, `"alt"`, `"shift"`)
 * `key` — the key used to toggle the VPN
+
+### Enable Sleep/Wake Handling
+
+Automatically disconnects VPN before sleep and reconnects after wake:
+
+```lua
+spoon.VpnToggle:addSleepWatcher()  -- default delay of 3 seconds
+```
+
+Optionally, specify a custom delay (in seconds) before reconnecting:
+
+```lua
+spoon.VpnToggle:addSleepWatcher({delay = 5})  -- reconnect 5 seconds after wake
+```
+
+### Start the Spoon
+
+```lua
+spoon.VpnToggle:start()
+```

@@ -40,6 +40,14 @@ local statuses = {
 }
 
 -------------------------------------------------------
+-- Helper Functions
+-------------------------------------------------------
+
+local function trim(s)
+    return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+-------------------------------------------------------
 -- macOS System API
 -------------------------------------------------------
 
@@ -68,16 +76,11 @@ local function systemStopVpn(name)
 end
 
 -------------------------------------------------------
--- Helper Functions
+-- Spoon's VPN Core
 -------------------------------------------------------
 
-local function trim(s)
-    return (s:gsub("^%s*(.-)%s*$", "%1"))
-end
-
 local function vpnStatus()
-    local output = systemVpnStatus(vpn)
-    output = trim(output)
+    local output = trim(systemVpnStatus(vpn))
     if output:match("^Connected") then
         return statuses.connected
     elseif output:match("^Connecting") then
@@ -108,29 +111,6 @@ local function updateIcon(status)
     end
 end
 
-local function waitForStatusChange(oldStatus, timeout, interval)
-    local elapsed = 0
-
-    local function shouldStop(newStatus)
-        if newStatus ~= oldStatus
-           and newStatus ~= statuses.connecting
-           and newStatus ~= statuses.disconnecting then
-            return true
-        end
-        return elapsed >= timeout
-    end
-
-    local timer
-    timer = hs.timer.doEvery(interval, function()
-        elapsed = elapsed + interval
-        local newStatus = vpnStatus()
-        updateIcon(newStatus)
-        if shouldStop(newStatus) then
-            timer:stop()
-        end
-    end)
-end
-
 local function toggleVPN()
     if isBusy() then return end
 
@@ -143,8 +123,24 @@ local function toggleVPN()
         updateIcon(statuses.connecting)
         systemStartVpn(vpn)
     end
+end
 
-    waitForStatusChange(oldStatus, 3, 0.5)
+-------------------------------------------------------
+-- Periodic VPN Status Check
+-------------------------------------------------------
+
+local periodicTimer
+
+local function startPeriodicStatusCheck()
+    if periodicTimer then
+        periodicTimer:stop()
+        periodicTimer = nil
+    end
+
+    periodicTimer = hs.timer.new(1, function()
+        updateIcon()
+    end, true)
+    periodicTimer:start()
 end
 
 -------------------------------------------------------
@@ -152,8 +148,8 @@ end
 -------------------------------------------------------
 
 local sleepWatcher
+local awakeDelay
 local wasConnectedBeforeSleep = false
-local wakeReconnectDelay = 2
 
 local function sleepWatcherCallback(eventType)
     if eventType == hs.caffeinate.watcher.systemWillSleep then
@@ -166,12 +162,11 @@ local function sleepWatcherCallback(eventType)
             wasConnectedBeforeSleep = false
         end
     elseif eventType == hs.caffeinate.watcher.systemDidWake then
-        hs.timer.doAfter(wakeReconnectDelay, function()
+        hs.timer.doAfter(awakeDelay, function()
             if wasConnectedBeforeSleep then
                 local oldStatus = vpnStatus()
                 systemStartVpn(vpn)
                 updateIcon(statuses.connecting)
-                waitForStatusChange(oldStatus, 3, 0.5)
                 wasConnectedBeforeSleep = false
             else
                 updateIcon()
@@ -208,18 +203,17 @@ function obj:start()
 
     vpn = systemVpnName()
 
-    local updateInterval = 3
-    hs.timer.doEvery(updateInterval, updateIcon)
+    startPeriodicStatusCheck()
 
-    updateIcon()
     return self
 end
 
---- VpnToggle:addSleepWatcher()
+--- VpnToggle:addSleepWatcher(delay)
 --- Method
 --- Adds sleep and awake watcher
-function obj:addSleepWatcher()
+function obj:addSleepWatcher(delay)
     if sleepWatcher then return self end
+    awakeDelay = delay or 5
     sleepWatcher = hs.caffeinate.watcher.new(
         sleepWatcherCallback
     )
