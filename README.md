@@ -42,13 +42,13 @@ spoon.VpnToggle:bindHotkeys({
 Automatically disconnect VPN before sleep and reconnect after wake:
 
 ```lua
-spoon.VpnToggle:addSleepWatcher()  -- default delay of 3 seconds
+spoon.VpnToggle:addSleepWatcher()  -- default delay of 5 seconds
 ```
 
 Optionally, specify a custom delay (in seconds) before reconnecting:
 
 ```lua
-spoon.VpnToggle:addSleepWatcher({delay = 5})
+spoon.VpnToggle:addSleepWatcher({delay = 1})
 ```
 
 ### Start the Spoon
