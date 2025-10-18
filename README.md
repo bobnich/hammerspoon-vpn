@@ -6,7 +6,6 @@
 
 * Works with **any macOS VPN** via system APIs — no need to open the VPN app.
 * Displays status: **Connected / Connecting / Disconnecting / Disconnected**.
-* Hotkeys are configurable from your `init.lua`.
 * Optional **sleep/awake watcher** can automatically disconnect VPN on sleep and reconnect on wake.
 
 ---
@@ -40,7 +39,7 @@ spoon.VpnToggle:bindHotkeys({
 
 ### Enable Sleep/Wake Handling
 
-Automatically disconnects VPN before sleep and reconnects after wake:
+Automatically disconnect VPN before sleep and reconnect after wake:
 
 ```lua
 spoon.VpnToggle:addSleepWatcher()  -- default delay of 3 seconds
