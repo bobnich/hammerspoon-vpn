@@ -19,7 +19,7 @@ obj.license = "MIT"
 
 obj.hotkeys = {}
 
-local vpn = hs.execute([[scutil --nc list | awk -F'"' '/\*/{print $2}']]):gsub("\n", "")
+local vpn
 
 local vpnMenu = hs.menubar.new()
 
@@ -40,6 +40,34 @@ local statuses = {
 }
 
 -------------------------------------------------------
+-- macOS System API
+-------------------------------------------------------
+
+local function systemVpnName() 
+    return hs.execute(
+        [[scutil --nc list | awk -F'"' '/\*/{print $2}']]
+    ):gsub("\n", "")
+end
+
+local function systemVpnStatus(name)
+    return hs.execute(
+        string.format('scutil --nc status "%s" 2>/dev/null', name)
+    ) or ""
+end
+
+local function systemStartVpn(name)
+    hs.execute(
+        string.format('scutil --nc start "%s"', name)
+    )
+end
+
+local function systemStopVpn(name)
+    hs.execute(
+        string.format('scutil --nc stop "%s"', name)
+    )
+end
+
+-------------------------------------------------------
 -- Helper Functions
 -------------------------------------------------------
 
@@ -48,7 +76,7 @@ local function trim(s)
 end
 
 local function vpnStatus()
-    local output = hs.execute(string.format('scutil --nc status "%s" 2>/dev/null', vpn)) or ""
+    local output = systemVpnStatus(vpn)
     output = trim(output)
     if output:match("^Connected") then
         return statuses.connected
@@ -110,17 +138,50 @@ local function toggleVPN()
 
     if oldStatus == statuses.connected then
         updateIcon(statuses.disconnecting)
-        hs.execute(string.format('scutil --nc stop "%s"', vpn))
+        systemStopVpn(vpn)
     else
         updateIcon(statuses.connecting)
-        hs.execute(string.format('scutil --nc start "%s"', vpn))
+        systemStartVpn(vpn)
     end
 
     waitForStatusChange(oldStatus, 3, 0.5)
 end
 
 -------------------------------------------------------
--- Spoon Methods
+-- Sleep/Wake Handling
+-------------------------------------------------------
+
+local sleepWatcher
+local wasConnectedBeforeSleep = false
+local wakeReconnectDelay = 2
+
+local function sleepWatcherCallback(eventType)
+    if eventType == hs.caffeinate.watcher.systemWillSleep then
+        local status = vpnStatus()
+        if status == statuses.connected then
+            wasConnectedBeforeSleep = true
+            systemStopVpn(vpn)
+            updateIcon(statuses.disconnecting)
+        else
+            wasConnectedBeforeSleep = false
+        end
+    elseif eventType == hs.caffeinate.watcher.systemDidWake then
+        hs.timer.doAfter(wakeReconnectDelay, function()
+            if wasConnectedBeforeSleep then
+                local oldStatus = vpnStatus()
+                systemStartVpn(vpn)
+                updateIcon(statuses.connecting)
+                waitForStatusChange(oldStatus, 3, 0.5)
+                wasConnectedBeforeSleep = false
+            else
+                updateIcon()
+            end
+        end)
+    end
+end
+
+-------------------------------------------------------
+-- Public API
 -------------------------------------------------------
 
 --- VpnToggle:bindHotkeys(hotkeyTable)
@@ -136,16 +197,44 @@ function obj:bindHotkeys(hotkeyTable)
     obj.hotkeys = hotkeyTable
 end
 
+--- VpnToggle:start()
+--- Method
+--- Starts spoon
 function obj:start()
     for _, hk in ipairs(obj.hotkeys) do
         local mods, key = hk.mods or {}, hk.key
         hs.hotkey.bind(mods, key, toggleVPN)
     end
 
+    vpn = systemVpnName()
+
     local updateInterval = 3
     hs.timer.doEvery(updateInterval, updateIcon)
 
     updateIcon()
+    return self
+end
+
+--- VpnToggle:addSleepWatcher()
+--- Method
+--- Adds sleep and awake watcher
+function obj:addSleepWatcher()
+    if sleepWatcher then return self end
+    sleepWatcher = hs.caffeinate.watcher.new(
+        sleepWatcherCallback
+    )
+    sleepWatcher:start()
+    return self
+end
+
+--- VpnToggle:removeSleepWatcher()
+--- Method
+--- Removes sleep and awake watcher
+function obj:removeSleepWatcher()
+    if sleepWatcher then
+        sleepWatcher:stop()
+        sleepWatcher = nil
+    end
     return self
 end
 
