@@ -48,7 +48,7 @@ spoon.VpnToggle:addSleepWatcher()  -- default delay of 5 seconds
 Optionally, specify a custom delay (in seconds) before reconnecting:
 
 ```lua
-spoon.VpnToggle:addSleepWatcher({delay = 1})
+spoon.VpnToggle:addSleepWatcher(1)
 ```
 
 ### Start the Spoon
